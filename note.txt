@@ -1,0 +1,9 @@
+https://developers.google.com/drive/quickstart-android
+
+How to save into Google Drive
+
+
+Attention to:
+
+ private void saveFileToDrive() {
+    Thread t = new Thread(new Runnable() {

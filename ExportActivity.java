@@ -1,3 +1,6 @@
+/**
+ * http://www.techotopia.com/index.php/A_Basic_Overview_of_Android_Threads_and_Thread_handlers
+ */
 package com.example.exportmysmszero;
 
 import java.io.File;
@@ -28,9 +31,17 @@ import android.widget.Toast;
 
 public class ExportActivity extends FragmentActivity {
 	
-	private static final int NUM_PAGES = 2;
+	private static final int NUM_PAGES = 3;
 	
-	private static Handler mHandler;
+ 	// Create a handler to update the UI
+	Handler mHandler = new Handler() {
+ 	      @Override
+ 	      public void handleMessage(Message msg) {
+ 	    	TextView mText = (TextView) findViewById(R.id.textView3);
+ 	  		mText.setText("Mission completed");
+ 	    	 
+ 	      }
+ 	    };
 	
 	private static String textResult; // Status
 	private static String smsData;
@@ -59,16 +70,7 @@ public class ExportActivity extends FragmentActivity {
      		mPager.setAdapter(mPagerAdapter);
      		
      		
-    		// Create a handler to update the UI
-     		mHandler = new Handler() {
-    	      @Override
-    	      public void handleMessage(Message msg) {
-    	    	TextView text = (TextView) findViewById(R.id.tv_result);
-    	  		text.setText(textResult);
-    	        //imageView.setImageBitmap(downloadBitmap);
-    	    	 
-    	      }
-    	    };
+
     }
 
 
@@ -91,6 +93,30 @@ public class ExportActivity extends FragmentActivity {
 	 * 
 	 */
 	public void onClickExportStart(View view) {
+		mPager.setCurrentItem(mPager.getCurrentItem() + 1, true);
+		
+		Runnable runnable = new Runnable() {
+	        public void run() {	        		        
+	        		  try {
+	        			  String smsData = getSms(getApplicationContext());
+	        				String textResult;
+	        				if (smsData != "" && smsData != null) {
+	        					textResult = smsData;
+	        				} else {
+	        					textResult = "No SMS in inbox!";
+	        				}
+	        		  } catch (Exception e) {
+	        			  Log.d("ex", "sms read ex" + textResult);
+	        		  }	
+	    mHandler.sendEmptyMessage(0);    
+	    }
+      };
+      
+      Thread mythread = new Thread(runnable);
+      mythread.start();
+		/* ---------------- */
+		
+		
 		
 		/* // initializing and starting a new local Thread object
 		Thread backgroundThread = new Thread(new Runnable() {
@@ -108,6 +134,9 @@ public class ExportActivity extends FragmentActivity {
 		
 		backgroundThread.start(); */
 		
+      
+      
+      /*
 		
 		String smsData = getSms(getApplicationContext());
 		String textResult = null;
@@ -123,8 +152,10 @@ public class ExportActivity extends FragmentActivity {
 		TextView text = (TextView) findViewById(R.id.tv_result);
 		text.setText(textResult);
 		
+		*/
+		
 		// Save to file
-		saveDataExStorage(textResult);
+		//saveDataExStorage(textResult);
 	}
 
 	/**
@@ -146,6 +177,9 @@ public class ExportActivity extends FragmentActivity {
 				break;
 			case 1:
 				mFragment = new ExpFragment2();
+				break;
+			case 2:
+				mFragment = new ExpFragment3();
 				break;
 			}
 			return mFragment;
@@ -254,17 +288,6 @@ public class ExportActivity extends FragmentActivity {
 		} else {
 			Toast.makeText(getApplicationContext(), R.string.err_cant_write_sdcard, Toast.LENGTH_SHORT).show();
 		}
-	}
-	
-	static public class MyThread implements Runnable {
-		// Method you must override to control what the Thread is doing
-		@Override
-        public void run() {
-            textResult = smsData;			
-			mHandler.sendEmptyMessage(0);
-        }
-		
-		
 	}
     
 }

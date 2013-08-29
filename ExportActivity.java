@@ -25,24 +25,36 @@ import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
 public class ExportActivity extends FragmentActivity {
-	
+
 	private static final int NUM_PAGES = 3;
-	
- 	// Create a handler to update the UI
+
+	// private ProgressBar mProgressBar;
+
+	// Create a handler to update the UI
 	Handler mHandler = new Handler() {
- 	      @Override
- 	      public void handleMessage(Message msg) {
- 	    	TextView mText = (TextView) findViewById(R.id.textView3);
- 	  		mText.setText("Mission completed");
- 	    	 
- 	      }
- 	    };
-	
+		@Override
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+			/*
+			 * if(msg.what == 1){ TextView mText = (TextView)
+			 * findViewById(R.id.textView3); mText.setText("Mission completed");
+			 * } if(msg.what == 2){ mProgressBar = (ProgressBar)
+			 * findViewById(R.id.progressBar1); mProgressBar.setVisibility(0); }
+			 */
+			TextView mText = (TextView) findViewById(R.id.textView3);
+			mText.setText("Mission completed");
+
+			ProgressBar mProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
+			mProgressBar.setVisibility(ProgressBar.INVISIBLE);
+
+		}
+	};
+
 	private static String textResult; // Status
 	private static String smsData;
 
@@ -59,103 +71,113 @@ public class ExportActivity extends FragmentActivity {
 	 */
 	private PagerAdapter mPagerAdapter;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_export);
-        
-     // Instantiate a ViewPager and a PagerAdapter.
-     		mPager = (ViewPager) findViewById(R.id.pager);
-     		mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
-     		mPager.setAdapter(mPagerAdapter);
-     		
-     		
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_export);
 
-    }
+		// Instantiate a ViewPager and a PagerAdapter.
+		mPager = (ViewPager) findViewById(R.id.pager);
+		mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
+		mPager.setAdapter(mPagerAdapter);
 
+		Log.d("Thread id:", " " + android.os.Process.myTid());
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.export, menu);
-        return true;
-    }
-    
-    /**
-     * Button listener - Slide to next screen
-     */
-    public void onClickExportMySms(View view) {
+		// mProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
+
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.export, menu);
+		return true;
+	}
+
+	/**
+	 * Button listener - Slide to next screen
+	 */
+	public void onClickNext(View view) {
 		mPager.setCurrentItem(mPager.getCurrentItem() + 1, true);
 	}
-    
-    /**
+
+	/**
 	 * Button listener - Export SMS
 	 * 
 	 */
 	public void onClickExportStart(View view) {
 		mPager.setCurrentItem(mPager.getCurrentItem() + 1, true);
-		
+		// mProgressBar.setVisibility(0);
+		ProgressBar mProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
+		mProgressBar.setVisibility(ProgressBar.VISIBLE);
+
 		Runnable runnable = new Runnable() {
-	        public void run() {	        		        
-	        		  try {
-	        			  String smsData = getSms(getApplicationContext());
-	        				String textResult;
-	        				if (smsData != "" && smsData != null) {
-	        					textResult = smsData;
-	        				} else {
-	        					textResult = "No SMS in inbox!";
-	        				}
-	        		  } catch (Exception e) {
-	        			  Log.d("ex", "sms read ex" + textResult);
-	        		  }	
-	    mHandler.sendEmptyMessage(0);    
-	    }
-      };
-      
-      Thread mythread = new Thread(runnable);
-      mythread.start();
+			public void run() {
+				Log.d("Thread id:", " " + android.os.Process.myTid());
+				try {
+					// Read SMS
+					String smsData = getSms(getApplicationContext());
+					String textResult;
+					if (smsData != "" && smsData != null) {
+						textResult = smsData;
+						// Log.d("ex", "sms read completed: " + textResult);
+					} else {
+						textResult = "No SMS in inbox!";
+					}
+
+					// Save to file
+					//saveDataExStorage(textResult);
+				} catch (Exception e) {
+					Log.d("ex", "sms read ex" + textResult);
+				}
+				/*
+				 * Message msg = new Message(); msg.what = 1;
+				 * mHandler.sendMessage(msg);
+				 * 
+				 * msg.what = 2; mHandler.sendMessage(msg);
+				 */
+
+				mHandler.sendEmptyMessage(0);
+			}
+		};
+
+		Thread mythread = new Thread(runnable);
+		mythread.start();
 		/* ---------------- */
-		
-		
-		
-		/* // initializing and starting a new local Thread object
-		Thread backgroundThread = new Thread(new Runnable() {
-	        public void run() {
-	            final Bitmap bitmap = loadImageFromNetwork("http://example.com/image.png");
-	            mImageView.post(new Runnable() {
-	            	// method executed by the Thread
-	            	public void run() {
-	            		// all the stuff we want our Thread to do goes here
-	                    mImageView.setImageBitmap(bitmap);
-	                }
-	            });
-	        }
-	    })
-		
-		backgroundThread.start(); */
-		
-      
-      
-      /*
-		
-		String smsData = getSms(getApplicationContext());
-		String textResult = null;
-		if (smsData != "" && smsData != null) {
-			// initializing and starting a new local Thread object
-			MyThread mt = new MyThread();
-			Thread currentThread = new Thread(mt);
-			currentThread.start();
-			//textResult = smsData;
-		} else {
-			textResult = "No SMS in inbox!";
-		}
-		TextView text = (TextView) findViewById(R.id.tv_result);
-		text.setText(textResult);
-		
-		*/
-		
+
+		/*
+		 * // initializing and starting a new local Thread object Thread
+		 * backgroundThread = new Thread(new Runnable() { public void run() {
+		 * final Bitmap bitmap =
+		 * loadImageFromNetwork("http://example.com/image.png");
+		 * mImageView.post(new Runnable() { // method executed by the Thread
+		 * public void run() { // all the stuff we want our Thread to do goes
+		 * here mImageView.setImageBitmap(bitmap); } }); } })
+		 * 
+		 * backgroundThread.start();
+		 */
+
+		/*
+		 * 
+		 * String smsData = getSms(getApplicationContext()); String textResult =
+		 * null; if (smsData != "" && smsData != null) { // initializing and
+		 * starting a new local Thread object MyThread mt = new MyThread();
+		 * Thread currentThread = new Thread(mt); currentThread.start();
+		 * //textResult = smsData; } else { textResult = "No SMS in inbox!"; }
+		 * TextView text = (TextView) findViewById(R.id.tv_result);
+		 * text.setText(textResult);
+		 */
+
 		// Save to file
-		//saveDataExStorage(textResult);
+		// saveDataExStorage(textResult);
+	}
+
+	/**
+	 * Button listener - Slide to first screen
+	 */
+	public void onClickNewExport(View view) {
+		mPager.setCurrentItem(mPager.getCurrentItem() - 1, true);
+		mPager.setCurrentItem(mPager.getCurrentItem() - 1, true);
 	}
 
 	/**
@@ -191,7 +213,7 @@ public class ExportActivity extends FragmentActivity {
 			return NUM_PAGES;
 		}
 	}
-	
+
 	/**
 	 * Read all SMS
 	 * 
@@ -247,47 +269,52 @@ public class ExportActivity extends FragmentActivity {
 			// to know is we can neither read nor write
 			mExternalStorageAvailable = mExternalStorageWriteable = false;
 		}
-		
+
 		/*
 		 * Write file
 		 */
 		if (mExternalStorageWriteable) {
-			File path = Environment.getExternalStoragePublicDirectory(
-		            Environment.DIRECTORY_PICTURES);
-		    File file = new File(path, "mySMSsave.txt");
-		    
-		    
-		    try {
-		        // Make sure the Pictures directory exists.
-		        path.mkdirs();
-		        
-		        // Create file
-			    file.createNewFile();
+			File path = Environment
+					.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+			File file = new File(path, "mySMSsave.txt");
 
-		        // Very simple code to copy a picture from the application's
-		        // resource into the external file.  Note that this code does
-		        // no error checking, and assumes the picture is small (does not
-		        // try to copy it in chunks).  Note that if external storage is
-		        // not currently mounted this will silently fail.
-		        //InputStream is = getResources().openRawResource(R.drawable.balloons);
-		        OutputStream os = new FileOutputStream(file);
-		        byte[] data = dataToSave.getBytes(Charset.forName("UTF-8")); //String to bytes
-		        //is.read(data);
-		        os.write(data);
-		        //is.close();
-		        os.close();
-		        Toast.makeText(getApplicationContext(), "File saved " + path, Toast.LENGTH_SHORT).show();
+			try {
+				// Make sure the Pictures directory exists.
+				path.mkdirs();
 
-		    } catch (IOException e) {
-		        // Unable to create file, likely because external storage is
-		        // not currently mounted.
-		        Log.w("ExternalStorage", "Error writing " + file, e);
-		        Toast.makeText(getApplicationContext(), "Save failed" + e, Toast.LENGTH_LONG).show();
-		    }
-			
+				// Create file
+				file.createNewFile();
+
+				// Very simple code to copy a picture from the application's
+				// resource into the external file. Note that this code does
+				// no error checking, and assumes the picture is small (does not
+				// try to copy it in chunks). Note that if external storage is
+				// not currently mounted this will silently fail.
+				// InputStream is =
+				// getResources().openRawResource(R.drawable.balloons);
+				OutputStream os = new FileOutputStream(file);
+				byte[] data = dataToSave.getBytes(Charset.forName("UTF-8")); // String
+																				// to
+																				// bytes
+				// is.read(data);
+				os.write(data);
+				// is.close();
+				os.close();
+				Toast.makeText(getApplicationContext(), "File saved " + path,
+						Toast.LENGTH_SHORT).show();
+
+			} catch (IOException e) {
+				// Unable to create file, likely because external storage is
+				// not currently mounted.
+				Log.w("ExternalStorage", "Error writing " + file, e);
+				Toast.makeText(getApplicationContext(), "Save failed" + e,
+						Toast.LENGTH_LONG).show();
+			}
+
 		} else {
-			Toast.makeText(getApplicationContext(), R.string.err_cant_write_sdcard, Toast.LENGTH_SHORT).show();
+			Toast.makeText(getApplicationContext(),
+					R.string.err_cant_write_sdcard, Toast.LENGTH_SHORT).show();
 		}
 	}
-    
+
 }

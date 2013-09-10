@@ -3,11 +3,10 @@
  */
 package com.example.exportmysmszero;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -25,6 +24,7 @@ import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -56,7 +56,7 @@ public class ExportActivity extends FragmentActivity {
 	};
 
 	private static String textResult; // Status
-	private static String smsData;
+	//private static String smsData;
 
 	Fragment mFragment = null;
 
@@ -85,6 +85,27 @@ public class ExportActivity extends FragmentActivity {
 
 		// mProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
 
+	}
+	
+	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState) {
+		super.onSaveInstanceState(savedInstanceState);
+		CheckBox mCheckBoxInbox = (CheckBox)findViewById(R.id.checkBox1);
+		CheckBox mCheckBoxOutbox = (CheckBox)findViewById(R.id.CheckBox2);
+		savedInstanceState.putBoolean("InboxChecked", mCheckBoxInbox.isChecked());
+		savedInstanceState.putBoolean("OutboxChecked", mCheckBoxOutbox.isChecked());		
+	}
+	
+	@Override
+	public void onRestoreInstanceState(Bundle savedInstanceState) {
+		super.onRestoreInstanceState(savedInstanceState);
+		boolean isInboxChecked = savedInstanceState.getBoolean("InboxChecked");
+		boolean isOutboxChecked = savedInstanceState.getBoolean("OutboxChecked");
+		CheckBox mCheckBoxInbox = (CheckBox)findViewById(R.id.checkBox1);
+		CheckBox mCheckBoxOutbox = (CheckBox)findViewById(R.id.CheckBox2);
+		mCheckBoxInbox.setChecked(isInboxChecked);
+		mCheckBoxOutbox.setChecked(isOutboxChecked);
+		
 	}
 
 	@Override
@@ -126,7 +147,7 @@ public class ExportActivity extends FragmentActivity {
 					}
 
 					// Save to file
-					//saveDataExStorage(textResult);
+					saveDataExStorage(textResult);
 				} catch (Exception e) {
 					Log.d("ex", "sms read ex" + textResult);
 				}
@@ -252,22 +273,20 @@ public class ExportActivity extends FragmentActivity {
 		/*
 		 * Check storage availability
 		 */
-		boolean mExternalStorageAvailable = false;
 		boolean mExternalStorageWriteable = false;
 		String state = Environment.getExternalStorageState();
 
 		if (Environment.MEDIA_MOUNTED.equals(state)) {
 			// We can read and write the media
-			mExternalStorageAvailable = mExternalStorageWriteable = true;
+			mExternalStorageWriteable = true;
 		} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
 			// We can only read the media
-			mExternalStorageAvailable = true;
 			mExternalStorageWriteable = false;
 		} else {
 			// Something else is wrong. It may be one of many other states, but
 			// all we need
 			// to know is we can neither read nor write
-			mExternalStorageAvailable = mExternalStorageWriteable = false;
+			mExternalStorageWriteable = false;
 		}
 
 		/*
@@ -276,15 +295,23 @@ public class ExportActivity extends FragmentActivity {
 		if (mExternalStorageWriteable) {
 			File path = Environment
 					.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-			File file = new File(path, "mySMSsave.txt");
+			File mFile = new File(path, "mySMSsave.txt");
 
 			try {
 				// Make sure the Pictures directory exists.
 				path.mkdirs();
 
-				// Create file
-				file.createNewFile();
+				// if file doesn't exists, then create it
+				if (!mFile.exists()) {
+					mFile.createNewFile();
+				}
 
+				FileWriter fw = new FileWriter(mFile.getAbsoluteFile());
+				BufferedWriter bw = new BufferedWriter(fw);
+				bw.write(dataToSave);
+				bw.close();
+
+				/*
 				// Very simple code to copy a picture from the application's
 				// resource into the external file. Note that this code does
 				// no error checking, and assumes the picture is small (does not
@@ -300,13 +327,14 @@ public class ExportActivity extends FragmentActivity {
 				os.write(data);
 				// is.close();
 				os.close();
+				*/
 				Toast.makeText(getApplicationContext(), "File saved " + path,
 						Toast.LENGTH_SHORT).show();
 
 			} catch (IOException e) {
 				// Unable to create file, likely because external storage is
 				// not currently mounted.
-				Log.w("ExternalStorage", "Error writing " + file, e);
+				Log.w("ExternalStorage", "Error writing " + mFile, e);
 				Toast.makeText(getApplicationContext(), "Save failed" + e,
 						Toast.LENGTH_LONG).show();
 			}

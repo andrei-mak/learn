@@ -52,6 +52,7 @@
                 android:checkMark="?android:attr/listChoiceIndicatorMultiple"
                 android:clickable="true"
                 android:gravity="center_vertical"
+                android:drawableLeft="@drawable/ic_launcher"
                 android:text="To CSV" />
 
             <TextView
